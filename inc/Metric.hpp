@@ -31,16 +31,16 @@
 
 class Metric {
 public:
-	Metric(int height, int width);
-	virtual ~Metric();
-	virtual float compute(const cv::Mat& original, const cv::Mat& processed) = 0;
+    Metric(int height, int width);
+    virtual ~Metric();
+    virtual float compute(const cv::Mat& original, const cv::Mat& processed) = 0;
 protected:
-	int height;
-	int width;
-	// Smoothing using a Gaussian kernel of size ksize with standard deviation sigma
-	// Returns only those parts of the correlation that are computed without zero-padded edges
-	// (similarly to 'filter2' in Matlab with option 'valid')
-	void applyGaussianBlur(const cv::Mat& src, cv::Mat& dst, int ksize, double sigma);
+    int height;
+    int width;
+    // Smoothing using a Gaussian kernel of size ksize with standard deviation sigma
+    // Returns only those parts of the correlation that are computed without zero-padded edges
+    // (similarly to 'filter2' in Matlab with option 'valid')
+    void applyGaussianBlur(const cv::Mat& src, cv::Mat& dst, int ksize, double sigma);
 };
 
 #endif

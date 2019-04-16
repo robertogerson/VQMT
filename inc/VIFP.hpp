@@ -59,14 +59,14 @@
 
 class VIFP : protected Metric {
 public:
-	VIFP(int height, int width);
-	// Compute the VIFp index of the processed image
-	float compute(const cv::Mat& original, const cv::Mat& processed);
+    VIFP(int height, int width);
+    // Compute the VIFp index of the processed image
+    float compute(const cv::Mat& original, const cv::Mat& processed);
 private:
-	static const int NLEVS = 4;
-	static const float SIGMA_NSQ;
-	// Compute the coefficients of the VIFp index at a particular subband
-	void computeVIFP(const cv::Mat& ref, const cv::Mat& dist, int N, double& num, double& den);
+    static const int NLEVS = 4;
+    static const float SIGMA_NSQ;
+    // Compute the coefficients of the VIFp index at a particular subband
+    void computeVIFP(const cv::Mat& ref, const cv::Mat& dist, int N, double& num, double& den);
 };
 
 #endif

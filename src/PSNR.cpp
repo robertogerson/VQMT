@@ -30,8 +30,8 @@ PSNR::PSNR(int h, int w) : Metric(h, w)
 
 float PSNR::compute(const cv::Mat& original, const cv::Mat& processed)
 {
-	cv::Mat tmp(height,width,CV_32F);
-	cv::subtract(original, processed, tmp);
-	cv::multiply(tmp, tmp, tmp);
-	return float(10*log10(255*255/cv::mean(tmp).val[0]));
+    cv::Mat tmp(height,width,CV_32F);
+    cv::subtract(original, processed, tmp);
+    cv::multiply(tmp, tmp, tmp);
+    return float(10*log10(255*255/cv::mean(tmp).val[0]));
 }

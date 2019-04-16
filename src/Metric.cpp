@@ -26,8 +26,8 @@
 
 Metric::Metric(int h, int w)
 {
-	height = h;
-	width = w;
+    height = h;
+    width = w;
 }
 
 Metric::~Metric()
@@ -37,8 +37,8 @@ Metric::~Metric()
 
 void Metric::applyGaussianBlur(const cv::Mat& src, cv::Mat& dst, int ksize, double sigma)
 {
-	int invalid = (ksize-1)/2;
-	cv::Mat tmp(src.rows, src.cols, CV_32F);
-	cv::GaussianBlur(src, tmp, cv::Size(ksize,ksize), sigma);
-	tmp(cv::Range(invalid, tmp.rows-invalid), cv::Range(invalid, tmp.cols-invalid)).copyTo(dst);
+    int invalid = (ksize-1)/2;
+    cv::Mat tmp(src.rows, src.cols, CV_32F);
+    cv::GaussianBlur(src, tmp, cv::Size(ksize,ksize), sigma);
+    tmp(cv::Range(invalid, tmp.rows-invalid), cv::Range(invalid, tmp.cols-invalid)).copyTo(dst);
 }

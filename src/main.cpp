@@ -81,204 +81,204 @@ And also Spherical metrics:
 #include "WSPSNR.hpp"
 
 enum Params {
-	PARAM_ORIGINAL = 1,	// Original video stream (YUV)
-	PARAM_PROCESSED,	// Processed video stream (YUV)
-	PARAM_HEIGHT,		// Height
-	PARAM_WIDTH,		// Width
-	PARAM_NBFRAMES,		// Number of frames
-	PARAM_CHROMA,		// Chroma format
-	PARAM_RESULTS,		// Output file for results
-	PARAM_METRICS,		// Metric(s) to compute
-	PARAM_SIZE
+    PARAM_ORIGINAL = 1,	// Original video stream (YUV)
+    PARAM_PROCESSED,	// Processed video stream (YUV)
+    PARAM_HEIGHT,		// Height
+    PARAM_WIDTH,		// Width
+    PARAM_NBFRAMES,		// Number of frames
+    PARAM_CHROMA,		// Chroma format
+    PARAM_RESULTS,		// Output file for results
+    PARAM_METRICS,		// Metric(s) to compute
+    PARAM_SIZE
 };
 
 enum Metrics {
-	METRIC_PSNR = 0,
-	METRIC_SSIM,
-	METRIC_MSSSIM,
-	METRIC_VIFP,
-	METRIC_PSNRHVS,
-	METRIC_PSNRHVSM,
+    METRIC_PSNR = 0,
+    METRIC_SSIM,
+    METRIC_MSSSIM,
+    METRIC_VIFP,
+    METRIC_PSNRHVS,
+    METRIC_PSNRHVSM,
 
-  METRIC_WSPSNR,
-	METRIC_SIZE
+    METRIC_WSPSNR,
+    METRIC_SIZE
 };
 
 int main (int argc, const char *argv[])
 {
-	// Check number of input parameters
-	if (argc < PARAM_SIZE) {
-		fprintf(stderr, "Check software usage: at least %d parameters are required.\n", PARAM_SIZE);
-		return EXIT_FAILURE;
-	}
+    // Check number of input parameters
+    if (argc < PARAM_SIZE) {
+        fprintf(stderr, "Check software usage: at least %d parameters are required.\n", PARAM_SIZE);
+        return EXIT_FAILURE;
+    }
 
-	double duration = static_cast<double>(cv::getTickCount());
+    double duration = static_cast<double>(cv::getTickCount());
 
-	// Input parameters
+    // Input parameters
     char *endptr = nullptr;
-	int height = static_cast<int>(strtol(argv[PARAM_HEIGHT], &endptr, 10));
-	if (*endptr) {
-		fprintf(stderr, "Incorrect value for video height: %s\n", argv[PARAM_HEIGHT]);
-		return EXIT_FAILURE;
-	}
-	int width = static_cast<int>(strtol(argv[PARAM_WIDTH], &endptr, 10));
-	if (*endptr) {
-		fprintf(stderr, "Incorrect value for video width: %s\n", argv[PARAM_WIDTH]);
-		return EXIT_FAILURE;
-	}
-	int nbframes = static_cast<int>(strtol(argv[PARAM_NBFRAMES], &endptr, 10));
-	if (*endptr) {
-		fprintf(stderr, "Incorrect value for number of frames: %s\n", argv[PARAM_NBFRAMES]);
-		return EXIT_FAILURE;
-	}
-	int chroma = static_cast<int>(strtol(argv[PARAM_CHROMA], &endptr, 10));
-	if (*endptr) {
-		fprintf(stderr, "Incorrect value for chroma: %s\n", argv[PARAM_CHROMA]);
-		return EXIT_FAILURE;
-	}
+    int height = static_cast<int>(strtol(argv[PARAM_HEIGHT], &endptr, 10));
+    if (*endptr) {
+        fprintf(stderr, "Incorrect value for video height: %s\n", argv[PARAM_HEIGHT]);
+        return EXIT_FAILURE;
+    }
+    int width = static_cast<int>(strtol(argv[PARAM_WIDTH], &endptr, 10));
+    if (*endptr) {
+        fprintf(stderr, "Incorrect value for video width: %s\n", argv[PARAM_WIDTH]);
+        return EXIT_FAILURE;
+    }
+    int nbframes = static_cast<int>(strtol(argv[PARAM_NBFRAMES], &endptr, 10));
+    if (*endptr) {
+        fprintf(stderr, "Incorrect value for number of frames: %s\n", argv[PARAM_NBFRAMES]);
+        return EXIT_FAILURE;
+    }
+    int chroma = static_cast<int>(strtol(argv[PARAM_CHROMA], &endptr, 10));
+    if (*endptr) {
+        fprintf(stderr, "Incorrect value for chroma: %s\n", argv[PARAM_CHROMA]);
+        return EXIT_FAILURE;
+    }
 
-	// Input video streams
-	VideoYUV *original  = new VideoYUV(argv[PARAM_ORIGINAL], height, width, nbframes, chroma);
-	VideoYUV *processed = new VideoYUV(argv[PARAM_PROCESSED], height, width, nbframes, chroma);
+    // Input video streams
+    VideoYUV *original  = new VideoYUV(argv[PARAM_ORIGINAL], height, width, nbframes, chroma);
+    VideoYUV *processed = new VideoYUV(argv[PARAM_PROCESSED], height, width, nbframes, chroma);
 
-	// Output files for results
+    // Output files for results
     FILE *result_file[METRIC_SIZE] = {nullptr};
-	char *str = new char[256];
-	for (int i=7; i<argc; i++) {
-		if (strcmp(argv[i], "PSNR") == 0) {
-			sprintf(str, "%s_psnr.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_PSNR] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "SSIM") == 0) {
-			sprintf(str, "%s_ssim.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_SSIM] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "MSSSIM") == 0) {
-			sprintf(str, "%s_msssim.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_MSSSIM] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "VIFP") == 0) {
-			sprintf(str, "%s_vifp.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_VIFP] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "PSNRHVS") == 0) {
-			sprintf(str, "%s_psnrhvs.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_PSNRHVS] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "PSNRHVSM") == 0) {
-			sprintf(str, "%s_psnrhvsm.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_PSNRHVSM] = fopen(str, "w");
-		}
-		else if (strcmp(argv[i], "WSPSNR") == 0) {
-			sprintf(str, "%s_wspsnr.csv", argv[PARAM_RESULTS]);
-			result_file[METRIC_WSPSNR] = fopen(str, "w");
-		}
-	}
-	delete[] str;
+    char *str = new char[256];
+    for (int i=7; i<argc; i++) {
+        if (strcmp(argv[i], "PSNR") == 0) {
+            sprintf(str, "%s_psnr.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_PSNR] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "SSIM") == 0) {
+            sprintf(str, "%s_ssim.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_SSIM] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "MSSSIM") == 0) {
+            sprintf(str, "%s_msssim.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_MSSSIM] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "VIFP") == 0) {
+            sprintf(str, "%s_vifp.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_VIFP] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "PSNRHVS") == 0) {
+            sprintf(str, "%s_psnrhvs.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_PSNRHVS] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "PSNRHVSM") == 0) {
+            sprintf(str, "%s_psnrhvsm.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_PSNRHVSM] = fopen(str, "w");
+        }
+        else if (strcmp(argv[i], "WSPSNR") == 0) {
+            sprintf(str, "%s_wspsnr.csv", argv[PARAM_RESULTS]);
+            result_file[METRIC_WSPSNR] = fopen(str, "w");
+        }
+    }
+    delete[] str;
 
-	// Check size for VIFp downsampling
+    // Check size for VIFp downsampling
     if (result_file[METRIC_VIFP] != nullptr && (height % 8 != 0 || width % 8 != 0)) {
-		fprintf(stderr, "VIFp: 'height' and 'width' have to be multiple of 8.\n");
-		exit(EXIT_FAILURE);
-	}
-	// Check size for MS-SSIM downsampling
+        fprintf(stderr, "VIFp: 'height' and 'width' have to be multiple of 8.\n");
+        exit(EXIT_FAILURE);
+    }
+    // Check size for MS-SSIM downsampling
     if (result_file[METRIC_MSSSIM] != nullptr && (height % 16 != 0 || width % 16 != 0)) {
-		fprintf(stderr, "MS-SSIM: 'height' and 'width' have to be multiple of 16.\n");
-		exit(EXIT_FAILURE);
-	}
+        fprintf(stderr, "MS-SSIM: 'height' and 'width' have to be multiple of 16.\n");
+        exit(EXIT_FAILURE);
+    }
 
-	// Print header to file
-	for (int m=0; m<METRIC_SIZE; m++) {
+    // Print header to file
+    for (int m=0; m<METRIC_SIZE; m++) {
         if (result_file[m] != nullptr) {
-			fprintf(result_file[m], "frame,value\n");
-		}
-	}
+            fprintf(result_file[m], "frame,value\n");
+        }
+    }
 
-	PSNR *psnr     = new PSNR(height, width);
-	SSIM *ssim     = new SSIM(height, width);
-	MSSSIM *msssim = new MSSSIM(height, width);
-	VIFP *vifp     = new VIFP(height, width);
-	PSNRHVS *phvs  = new PSNRHVS(height, width);
+    PSNR *psnr     = new PSNR(height, width);
+    SSIM *ssim     = new SSIM(height, width);
+    MSSSIM *msssim = new MSSSIM(height, width);
+    VIFP *vifp     = new VIFP(height, width);
+    PSNRHVS *phvs  = new PSNRHVS(height, width);
 
-	cv::Mat original_frame(height,width,CV_32F), processed_frame(height,width,CV_32F);
-	float result[METRIC_SIZE] = {0};
-	float result_avg[METRIC_SIZE] = {0};
+    cv::Mat original_frame(height,width,CV_32F), processed_frame(height,width,CV_32F);
+    float result[METRIC_SIZE] = {0};
+    float result_avg[METRIC_SIZE] = {0};
 
-	for (int frame=0; frame<nbframes; frame++) {
-    printf ("Computing metrics for frame %d.\n", frame);
-		
-  	if (!original->readOneFrame()) exit(EXIT_FAILURE);
-	    original->getLuma(original_frame, CV_32F);
-		if (!processed->readOneFrame()) exit(EXIT_FAILURE);
-  	  processed->getLuma(processed_frame, CV_32F);
+    for (int frame=0; frame<nbframes; frame++) {
+        printf ("Computing metrics for frame %d.\n", frame);
 
-		// Compute PSNR
-    if (result_file[METRIC_PSNR] != nullptr) {
-			result[METRIC_PSNR] = psnr->compute(original_frame, processed_frame);
-		}
+        if (!original->readOneFrame()) exit(EXIT_FAILURE);
+        original->getLuma(original_frame, CV_32F);
+        if (!processed->readOneFrame()) exit(EXIT_FAILURE);
+        processed->getLuma(processed_frame, CV_32F);
 
-		// Compute SSIM and MS-SSIM
-    if (result_file[METRIC_SSIM] != nullptr && result_file[METRIC_MSSSIM] == nullptr) {
-			result[METRIC_SSIM] = ssim->compute(original_frame, processed_frame);
-		}
-    if (result_file[METRIC_MSSSIM] != nullptr) {
-      msssim->compute(original_frame, processed_frame);
-      
-      if (result_file[METRIC_SSIM] != nullptr) {
-				result[METRIC_SSIM] = msssim->getSSIM();
-			}
+        // Compute PSNR
+        if (result_file[METRIC_PSNR] != nullptr) {
+            result[METRIC_PSNR] = psnr->compute(original_frame, processed_frame);
+        }
 
-			result[METRIC_MSSSIM] = msssim->getMSSSIM();
-		}
+        // Compute SSIM and MS-SSIM
+        if (result_file[METRIC_SSIM] != nullptr && result_file[METRIC_MSSSIM] == nullptr) {
+            result[METRIC_SSIM] = ssim->compute(original_frame, processed_frame);
+        }
+        if (result_file[METRIC_MSSSIM] != nullptr) {
+            msssim->compute(original_frame, processed_frame);
 
-		// Compute VIFp
-    if (result_file[METRIC_VIFP] != nullptr) {
-			result[METRIC_VIFP] = vifp->compute(original_frame, processed_frame);
-		}
+            if (result_file[METRIC_SSIM] != nullptr) {
+                result[METRIC_SSIM] = msssim->getSSIM();
+            }
 
-		// Compute PSNR-HVS and PSNR-HVS-M
-    if (result_file[METRIC_PSNRHVS] != nullptr || result_file[METRIC_PSNRHVSM] != nullptr) {
-		  phvs->compute(original_frame, processed_frame);
+            result[METRIC_MSSSIM] = msssim->getMSSSIM();
+        }
 
-      if (result_file[METRIC_PSNRHVS] != nullptr) {
-				result[METRIC_PSNRHVS] = phvs->getPSNRHVS();
-			}
+        // Compute VIFp
+        if (result_file[METRIC_VIFP] != nullptr) {
+            result[METRIC_VIFP] = vifp->compute(original_frame, processed_frame);
+        }
 
-      if (result_file[METRIC_PSNRHVSM] != nullptr) {
-				result[METRIC_PSNRHVSM] = phvs->getPSNRHVSM();
-			}
-		}
+        // Compute PSNR-HVS and PSNR-HVS-M
+        if (result_file[METRIC_PSNRHVS] != nullptr || result_file[METRIC_PSNRHVSM] != nullptr) {
+            phvs->compute(original_frame, processed_frame);
 
-		// Print quality index to file
-		for (int m=0; m<METRIC_SIZE; m++) {
-      if (result_file[m] != nullptr) {
-			  result_avg[m] += result[m];
-				fprintf(result_file[m], "%d,%.6f\n", frame, static_cast<double>(result[m]));
-			}
-		}
-	}
+            if (result_file[METRIC_PSNRHVS] != nullptr) {
+                result[METRIC_PSNRHVS] = phvs->getPSNRHVS();
+            }
 
-	// Print average quality index to file
-	for (int m=0; m<METRIC_SIZE; m++) {
-    if (result_file[m] != nullptr) {
-			result_avg[m] /= static_cast<float>(nbframes);
-			fprintf(result_file[m], "average,%.6f", static_cast<double>(result_avg[m]));
-			fclose(result_file[m]);
-		}
-	}
+            if (result_file[METRIC_PSNRHVSM] != nullptr) {
+                result[METRIC_PSNRHVSM] = phvs->getPSNRHVSM();
+            }
+        }
 
-	delete psnr;
-	delete ssim;
-	delete msssim;
-	delete vifp;
-	delete phvs;
-	delete original;
-	delete processed;
+        // Print quality index to file
+        for (int m=0; m<METRIC_SIZE; m++) {
+            if (result_file[m] != nullptr) {
+                result_avg[m] += result[m];
+                fprintf(result_file[m], "%d,%.6f\n", frame, static_cast<double>(result[m]));
+            }
+        }
+    }
 
-	duration = static_cast<double>(cv::getTickCount())-duration;
-	duration /= cv::getTickFrequency();
-	printf("Time: %0.3fs\n", duration);
+    // Print average quality index to file
+    for (int m=0; m<METRIC_SIZE; m++) {
+        if (result_file[m] != nullptr) {
+            result_avg[m] /= static_cast<float>(nbframes);
+            fprintf(result_file[m], "average,%.6f", static_cast<double>(result_avg[m]));
+            fclose(result_file[m]);
+        }
+    }
 
-	return EXIT_SUCCESS;
+    delete psnr;
+    delete ssim;
+    delete msssim;
+    delete vifp;
+    delete phvs;
+    delete original;
+    delete processed;
+
+    duration = static_cast<double>(cv::getTickCount())-duration;
+    duration /= cv::getTickFrequency();
+    printf("Time: %0.3fs\n", duration);
+
+    return EXIT_SUCCESS;
 }
 

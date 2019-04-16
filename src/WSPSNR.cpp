@@ -31,15 +31,15 @@ WSPSNR::WSPSNR(int h, int w) : Metric(h, w)
 
 float WSPSNR::compute(const cv::Mat& original, const cv::Mat& processed)
 {
-	cv::Mat tmp (height, width,  CV_32F);
-	cv::Mat weights (height, width,  CV_32F);
+    cv::Mat tmp (height, width,  CV_32F);
+    cv::Mat weights (height, width,  CV_32F);
 
-  for (int j = 0; j < height; j++) {
-    weights = cos ((j + 0.5 - height / 2) * M_PI);
-  }
+    for (int j = 0; j < height; j++) {
+        weights = cos ((j + 0.5 - height / 2) * M_PI);
+    }
 
-	cv::subtract(original, processed, tmp);
-	cv::multiply(tmp, weights, tmp);
-	cv::multiply(tmp, tmp, tmp);
-	return float(10*log10(255*255/cv::mean(tmp).val[0]));
+    cv::subtract(original, processed, tmp);
+    cv::multiply(tmp, weights, tmp);
+    cv::multiply(tmp, tmp, tmp);
+    return float(10*log10(255*255/cv::mean(tmp).val[0]));
 }

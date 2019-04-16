@@ -50,21 +50,21 @@
 
 class MSSSIM : protected SSIM {
 public:
-	MSSSIM(int height, int width);
-	// Compute the SSIM and MS-SSIM indexes of the processed image
-	// Return the MS-SSIM index
-	float compute(const cv::Mat& original, const cv::Mat& processed);
-	// Return the SSIM index only
-	// compute() needs to be called before getSSIM()
-	float getSSIM();
-	// Return the MS-SSIM index only
-	// compute() needs to be called before getMSSSIM()
-	float getMSSSIM();
+    MSSSIM(int height, int width);
+    // Compute the SSIM and MS-SSIM indexes of the processed image
+    // Return the MS-SSIM index
+    float compute(const cv::Mat& original, const cv::Mat& processed);
+    // Return the SSIM index only
+    // compute() needs to be called before getSSIM()
+    float getSSIM();
+    // Return the MS-SSIM index only
+    // compute() needs to be called before getMSSSIM()
+    float getMSSSIM();
 private:
-	double ssim;
-	double msssim;
-	static const int NLEVS = 5;
-	static const double WEIGHT[];
+    double ssim;
+    double msssim;
+    static const int NLEVS = 5;
+    static const double WEIGHT[];
 };
 
 #endif

@@ -43,54 +43,54 @@ MSSSIM::MSSSIM(int h, int w) : SSIM(h, w)
 
 float MSSSIM::compute(const cv::Mat& original, const cv::Mat& processed)
 {
-	double mssim[NLEVS];
-	double mcs[NLEVS];
+    double mssim[NLEVS];
+    double mcs[NLEVS];
 
-	cv::Mat im1[NLEVS];
-	cv::Mat im2[NLEVS];
-	
-	int w = original.cols;
-	int h = original.rows;
-	
-	original.copyTo(im1[0]);
-	processed.copyTo(im2[0]);
-	
-	for (int l=0; l<NLEVS; l++) {
-		// [mssim_array(l) ssim_map_array{l} mcs_array(l) cs_map_array{l}] = ssim_index_new(im1, im2, K, window);
-		cv::Scalar res = SSIM::computeSSIM(im1[l], im2[l]);
-		mssim[l] = res.val[0];
-		mcs[l] = res.val[1];
+    cv::Mat im1[NLEVS];
+    cv::Mat im2[NLEVS];
 
-		if (l < NLEVS-1) {
-			w /= 2;
-			h /= 2;
-			im1[l+1] = cv::Mat(h,w,CV_32F);
-			im2[l+1] = cv::Mat(h,w,CV_32F);
-			
-			// filtered_im1 = filter2(downsample_filter, im1, 'valid');
-			// im1 = filtered_im1(1:2:M-1, 1:2:N-1);
-			cv::resize(im1[l], im1[l+1], cv::Size(w,h), 0, 0, cv::INTER_LINEAR);
-			// filtered_im2 = filter2(downsample_filter, im2, 'valid');
-			// im2 = filtered_im2(1:2:M-1, 1:2:N-1);
-			cv::resize(im2[l], im2[l+1], cv::Size(w,h), 0, 0, cv::INTER_LINEAR);
-		}
-	}
+    int w = original.cols;
+    int h = original.rows;
 
-	ssim = mssim[0];
+    original.copyTo(im1[0]);
+    processed.copyTo(im2[0]);
 
-	// overall_mssim = prod(mcs_array(1:level-1).^weight(1:level-1))*mssim_array(level);
-	msssim = mssim[NLEVS-1];
-	for (int l=0; l<NLEVS-1; l++)	msssim *= pow(mcs[l], WEIGHT[l]);
+    for (int l=0; l<NLEVS; l++) {
+        // [mssim_array(l) ssim_map_array{l} mcs_array(l) cs_map_array{l}] = ssim_index_new(im1, im2, K, window);
+        cv::Scalar res = SSIM::computeSSIM(im1[l], im2[l]);
+        mssim[l] = res.val[0];
+        mcs[l] = res.val[1];
 
-	return float(msssim);
+        if (l < NLEVS-1) {
+            w /= 2;
+            h /= 2;
+            im1[l+1] = cv::Mat(h,w,CV_32F);
+            im2[l+1] = cv::Mat(h,w,CV_32F);
+
+            // filtered_im1 = filter2(downsample_filter, im1, 'valid');
+            // im1 = filtered_im1(1:2:M-1, 1:2:N-1);
+            cv::resize(im1[l], im1[l+1], cv::Size(w,h), 0, 0, cv::INTER_LINEAR);
+            // filtered_im2 = filter2(downsample_filter, im2, 'valid');
+            // im2 = filtered_im2(1:2:M-1, 1:2:N-1);
+            cv::resize(im2[l], im2[l+1], cv::Size(w,h), 0, 0, cv::INTER_LINEAR);
+        }
+    }
+
+    ssim = mssim[0];
+
+    // overall_mssim = prod(mcs_array(1:level-1).^weight(1:level-1))*mssim_array(level);
+    msssim = mssim[NLEVS-1];
+    for (int l=0; l<NLEVS-1; l++)	msssim *= pow(mcs[l], WEIGHT[l]);
+
+    return float(msssim);
 }
 
 float MSSSIM::getSSIM()
 {
-	return float(ssim);
+    return float(ssim);
 }
 
 float MSSSIM::getMSSSIM()
 {
-	return float(msssim);
+    return float(msssim);
 }

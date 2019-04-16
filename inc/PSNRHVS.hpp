@@ -57,23 +57,23 @@
 
 class PSNRHVS : protected Metric {
 public:
-	PSNRHVS(int height, int width);
-	// Compute the PSNR-HVS-M and PSNR-HVS indexes of the processed image
-	// Return the PSNR-HVS-M index
-	float compute(const cv::Mat& original, const cv::Mat& processed);
-	// Return the PSNR-HVS index only
-	// compute() needs to be called before getPSNRHVS()
-	float getPSNRHVS();
-	// Return the PSNR-HVS-M index only
-	// compute() needs to be called before getPSNRHVSM()
-	float getPSNRHVSM();
+    PSNRHVS(int height, int width);
+    // Compute the PSNR-HVS-M and PSNR-HVS indexes of the processed image
+    // Return the PSNR-HVS-M index
+    float compute(const cv::Mat& original, const cv::Mat& processed);
+    // Return the PSNR-HVS index only
+    // compute() needs to be called before getPSNRHVS()
+    float getPSNRHVS();
+    // Return the PSNR-HVS-M index only
+    // compute() needs to be called before getPSNRHVSM()
+    float getPSNRHVSM();
 private:
-	float psnrhvs;
-	float psnrhvsm;
-	static const float CSF[8][8];
-	static const float MASK[8][8];
-	float maskeff(const cv::Mat &z, const cv::Mat &zdct);
-	float vari(const cv::Mat &z);
+    float psnrhvs;
+    float psnrhvsm;
+    static const float CSF[8][8];
+    static const float MASK[8][8];
+    float maskeff(const cv::Mat &z, const cv::Mat &zdct);
+    float vari(const cv::Mat &z);
 };
 
 #endif

@@ -35,9 +35,9 @@
 
 class WSPSNR : protected Metric {
 public:
-	WSPSNR(int height, int width);
-	// Compute the WSPSNR index of the processed image
-	float compute(const cv::Mat& original, const cv::Mat& processed);
+    WSPSNR(int height, int width);
+    // Compute the WSPSNR index of the processed image
+    float compute(const cv::Mat& original, const cv::Mat& processed);
 };
 
 #endif
