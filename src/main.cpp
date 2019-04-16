@@ -200,6 +200,8 @@ int main (int argc, const char *argv[])
     VIFP *vifp     = new VIFP(height, width);
     PSNRHVS *phvs  = new PSNRHVS(height, width);
 
+    WSPSNR *wspsnr     = new WSPSNR(height, width);
+
     cv::Mat original_frame(height,width,CV_32F), processed_frame(height,width,CV_32F);
     float result[METRIC_SIZE] = {0};
     float result_avg[METRIC_SIZE] = {0};
@@ -209,6 +211,7 @@ int main (int argc, const char *argv[])
 
         if (!original->readOneFrame()) exit(EXIT_FAILURE);
         original->getLuma(original_frame, CV_32F);
+
         if (!processed->readOneFrame()) exit(EXIT_FAILURE);
         processed->getLuma(processed_frame, CV_32F);
 
@@ -249,6 +252,13 @@ int main (int argc, const char *argv[])
             }
         }
 
+        // Compute WSPSNR
+        if (result_file[METRIC_WSPSNR] != nullptr) {
+            result[METRIC_WSPSNR] = wspsnr->compute(original_frame, processed_frame);
+        }
+
+        printf ("PSNR: %.3f, WSPSNR: %.3f\n", result[METRIC_PSNR], result[METRIC_WSPSNR]);
+
         // Print quality index to file
         for (int m=0; m<METRIC_SIZE; m++) {
             if (result_file[m] != nullptr) {
@@ -272,8 +282,12 @@ int main (int argc, const char *argv[])
     delete msssim;
     delete vifp;
     delete phvs;
+
+    delete wspsnr;
+
     delete original;
     delete processed;
+
 
     duration = static_cast<double>(cv::getTickCount())-duration;
     duration /= cv::getTickFrequency();
