@@ -35,8 +35,8 @@
 
 #include "SSIM.hpp"
 
-const float SSIM::C1 = 6.5025f;
-const float SSIM::C2 = 58.5225f;
+const double SSIM::C1 = 6.5025;
+const double SSIM::C2 = 58.5225;
 
 SSIM::SSIM(int h, int w) : Metric(h, w)
 {
@@ -58,10 +58,10 @@ cv::Scalar SSIM::computeSSIM(const cv::Mat& img1, const cv::Mat& img2)
 
     cv::Mat mu1(h, w, CV_32F), mu2(h, w, CV_32F);
     cv::Mat mu1_sq(h, w, CV_32F), mu2_sq(h, w, CV_32F), mu1_mu2(h, w, CV_32F);
-    cv::Mat img1_sq(ht,wt,CV_32F), img2_sq(ht,wt,CV_32F), img1_img2(ht,wt,CV_32F);
-    cv::Mat sigma1_sq(h,w,CV_32F), sigma2_sq(h,w,CV_32F), sigma12(h,w,CV_32F);
-    cv::Mat tmp1(h,w,CV_32F), tmp2(h,w,CV_32F), tmp3(h,w,CV_32F);
-    cv::Mat ssim_map(h,w,CV_32F), cs_map(h,w,CV_32F);
+    cv::Mat img1_sq(ht, wt, CV_32F), img2_sq(ht, wt, CV_32F), img1_img2(ht, wt, CV_32F);
+    cv::Mat sigma1_sq(h, w, CV_32F), sigma2_sq(h, w, CV_32F), sigma12(h, w, CV_32F);
+    cv::Mat tmp1(h, w, CV_32F), tmp2(h, w, CV_32F), tmp3(h, w, CV_32F);
+    cv::Mat ssim_map(h, w, CV_32F), cs_map(h, w, CV_32F);
 
     // mu1 = filter2(window, img1, 'valid');
     applyGaussianBlur(img1, mu1, 11, 1.5);

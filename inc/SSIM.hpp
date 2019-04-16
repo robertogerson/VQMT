@@ -53,8 +53,8 @@ protected:
     // Compute the SSIM index and mean of the contrast comparison function
     cv::Scalar computeSSIM(const cv::Mat& img1, const cv::Mat& img2);
 private:
-    static const float C1;
-    static const float C2;
+    static const double C1;
+    static const double C2;
 };
 
 #endif
