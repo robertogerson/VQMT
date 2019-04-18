@@ -85,6 +85,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -flto -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g3 -ggdb3 -Wpadded -Wpacked")
 
 find_package(OpenCV REQUIRED)
+
+set(Boost_USE_STATIC_LIBS ON)
+find_package( Boost 1.40 COMPONENTS program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 set(EXECUTABLE_NAME ${CMAKE_PROJECT_NAME})
 set(SRCS
     ${SOURCE_DIR}/main.cpp
@@ -98,12 +103,14 @@ set(SRCS
 
     # Spherical metrics
     ${SOURCE_DIR}/WSPSNR.cpp
+#    ${SOURCE_DIR}/WSSSIM.cpp
+#    ${SOURCE_DIR}/WSMSSSIM.cpp
 )
 add_executable(
     ${EXECUTABLE_NAME}
     ${SRCS}
 )
-target_link_libraries(${CMAKE_PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 set(VQMT_DOC_FILES
 	AUTHORS.md

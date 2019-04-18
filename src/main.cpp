@@ -69,7 +69,13 @@ And also Spherical metrics:
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <opencv2/core/core.hpp>
+
+//Boost::program_options
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 #include "VideoYUV.hpp"
 #include "PSNR.hpp"
 #include "SSIM.hpp"
@@ -80,18 +86,6 @@ And also Spherical metrics:
 // Spherical metrics
 #include "WSPSNR.hpp"
 
-enum Params {
-    PARAM_ORIGINAL = 1,	// Original video stream (YUV)
-    PARAM_PROCESSED,	// Processed video stream (YUV)
-    PARAM_HEIGHT,		// Height
-    PARAM_WIDTH,		// Width
-    PARAM_NBFRAMES,		// Number of frames
-    PARAM_CHROMA,		// Chroma format
-    PARAM_RESULTS,		// Output file for results
-    PARAM_METRICS,		// Metric(s) to compute
-    PARAM_SIZE
-};
-
 enum Metrics {
     METRIC_PSNR = 0,
     METRIC_SSIM,
@@ -101,76 +95,85 @@ enum Metrics {
     METRIC_PSNRHVSM,
 
     METRIC_WSPSNR,
+    METRIC_WSSSIM,
+    METRIC_WSMMSSSIM,
     METRIC_SIZE
 };
 
 int main (int argc, const char *argv[])
 {
-    // Check number of input parameters
-    if (argc < PARAM_SIZE) {
-        fprintf(stderr, "Check software usage: at least %d parameters are required.\n", PARAM_SIZE);
-        return EXIT_FAILURE;
+    po::options_description desc("Allowed options");
+    desc.add_options()
+      ("help",          "produce this help message")
+      ("original,i",    po::value<std::string>(), "Original video stream (YUV)")
+      ("processed,p",   po::value<std::string>(), "Processed video stream (YUV)")
+      ("width,w",       po::value<int>(), "Width")
+      ("height,h",      po::value<int>(), "Height")
+      ("frames,f",      po::value<int>(), "Number of frames")
+      ("chroma,c",      po::value<int>(), "Chroma format")
+      ("results,r",     po::value<std::string>(), "Output dir for results")
+      ("metrics,m",     po::value<std::vector<std::string>>()->multitoken(), "Metrics to compute")
+      ;
+
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        std::cout << desc << "\n";
+        return 1;
     }
+
 
     double duration = static_cast<double>(cv::getTickCount());
 
     // Input parameters
-    char *endptr = nullptr;
-    int height = static_cast<int>(strtol(argv[PARAM_HEIGHT], &endptr, 10));
-    if (*endptr) {
-        fprintf(stderr, "Incorrect value for video height: %s\n", argv[PARAM_HEIGHT]);
-        return EXIT_FAILURE;
-    }
-    int width = static_cast<int>(strtol(argv[PARAM_WIDTH], &endptr, 10));
-    if (*endptr) {
-        fprintf(stderr, "Incorrect value for video width: %s\n", argv[PARAM_WIDTH]);
-        return EXIT_FAILURE;
-    }
-    int nbframes = static_cast<int>(strtol(argv[PARAM_NBFRAMES], &endptr, 10));
-    if (*endptr) {
-        fprintf(stderr, "Incorrect value for number of frames: %s\n", argv[PARAM_NBFRAMES]);
-        return EXIT_FAILURE;
-    }
-    int chroma = static_cast<int>(strtol(argv[PARAM_CHROMA], &endptr, 10));
-    if (*endptr) {
-        fprintf(stderr, "Incorrect value for chroma: %s\n", argv[PARAM_CHROMA]);
-        return EXIT_FAILURE;
-    }
+    int width    = vm["width"].as<int>();
+    int height   = vm["height"].as<int>();
+    int nbframes = vm["frames"].as<int>();
+    int chroma   = vm["chroma"].as<int>();
+
+    std::string orig = vm["original"].as<std::string>();
+    std::string proc = vm["processed"].as<std::string>();
+
+
+    std::cout << orig << " " << proc << std::endl;
 
     // Input video streams
-    VideoYUV *original  = new VideoYUV(argv[PARAM_ORIGINAL], height, width, nbframes, chroma);
-    VideoYUV *processed = new VideoYUV(argv[PARAM_PROCESSED], height, width, nbframes, chroma);
+    VideoYUV *original  = new VideoYUV(orig.c_str(), height, width, nbframes, chroma);
+    VideoYUV *processed = new VideoYUV(proc.c_str(), height, width, nbframes, chroma);
 
     // Output files for results
     FILE *result_file[METRIC_SIZE] = {nullptr};
     char *str = new char[256];
-    for (int i=7; i<argc; i++) {
-        if (strcmp(argv[i], "PSNR") == 0) {
-            sprintf(str, "%s_psnr.csv", argv[PARAM_RESULTS]);
+    for (auto metric : vm["metrics"].as<std::vector<std::string>>()) {
+        std::cout << metric << std::endl;
+        if (metric == "PSNR") {
+            sprintf(str, "%s_psnr.csv", metric.c_str());
             result_file[METRIC_PSNR] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "SSIM") == 0) {
-            sprintf(str, "%s_ssim.csv", argv[PARAM_RESULTS]);
+        else if (metric == "SSIM") {
+            sprintf(str, "%s_ssim.csv", metric.c_str());
             result_file[METRIC_SSIM] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "MSSSIM") == 0) {
-            sprintf(str, "%s_msssim.csv", argv[PARAM_RESULTS]);
+        else if (metric == "MSSSIM") {
+            sprintf(str, "%s_msssim.csv", metric.c_str());
             result_file[METRIC_MSSSIM] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "VIFP") == 0) {
-            sprintf(str, "%s_vifp.csv", argv[PARAM_RESULTS]);
+        else if (metric == "VIFP") {
+            sprintf(str, "%s_vifp.csv", metric.c_str());
             result_file[METRIC_VIFP] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "PSNRHVS") == 0) {
-            sprintf(str, "%s_psnrhvs.csv", argv[PARAM_RESULTS]);
+        else if (metric == "PSNRHVS") {
+            sprintf(str, "%s_psnrhvs.csv", metric.c_str());
             result_file[METRIC_PSNRHVS] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "PSNRHVSM") == 0) {
-            sprintf(str, "%s_psnrhvsm.csv", argv[PARAM_RESULTS]);
+        else if (metric == "PSNRHVSM") {
+            sprintf(str, "%s_psnrhvsm.csv", metric.c_str());
             result_file[METRIC_PSNRHVSM] = fopen(str, "w");
         }
-        else if (strcmp(argv[i], "WSPSNR") == 0) {
-            sprintf(str, "%s_wspsnr.csv", argv[PARAM_RESULTS]);
+        else if (metric == "WSPSNR") {
+            sprintf(str, "%s_wspsnr.csv", metric.c_str());
             result_file[METRIC_WSPSNR] = fopen(str, "w");
         }
     }
@@ -200,7 +203,7 @@ int main (int argc, const char *argv[])
     VIFP *vifp     = new VIFP(height, width);
     PSNRHVS *phvs  = new PSNRHVS(height, width);
 
-    WSPSNR *wspsnr     = new WSPSNR(height, width);
+    WSPSNR *wspsnr = new WSPSNR(height, width);
 
     cv::Mat original_frame(height,width,CV_32F), processed_frame(height,width,CV_32F);
     float result[METRIC_SIZE] = {0};
@@ -224,6 +227,7 @@ int main (int argc, const char *argv[])
         if (result_file[METRIC_SSIM] != nullptr && result_file[METRIC_MSSSIM] == nullptr) {
             result[METRIC_SSIM] = ssim->compute(original_frame, processed_frame);
         }
+
         if (result_file[METRIC_MSSSIM] != nullptr) {
             msssim->compute(original_frame, processed_frame);
 
@@ -277,19 +281,11 @@ int main (int argc, const char *argv[])
         }
     }
 
-    delete psnr;
-    delete ssim;
-    delete msssim;
-    delete vifp;
-    delete phvs;
-
+    delete psnr, ssim, msssim, vifp, phvs;
     delete wspsnr;
+    delete original, processed;
 
-    delete original;
-    delete processed;
-
-
-    duration = static_cast<double>(cv::getTickCount())-duration;
+    duration = static_cast<double>(cv::getTickCount()) - duration;
     duration /= cv::getTickFrequency();
     printf("Time: %0.3fs\n", duration);
 
