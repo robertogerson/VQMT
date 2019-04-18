@@ -100,6 +100,16 @@ enum Metrics {
     METRIC_SIZE
 };
 
+std::map<std::string, Metrics> metric2index = {
+    {"PSNR", METRIC_PSNR},
+    {"SSIM", METRIC_SSIM},
+    {"MSSSIM", METRIC_MSSSIM},
+    {"VIFP", METRIC_VIFP},
+    {"PSNRHVS", METRIC_PSNRHVS},
+    {"PSNRHVSM", METRIC_PSNRHVSM},
+    {"WSPSNR", METRIC_WSPSNR},
+};
+
 int main (int argc, const char *argv[])
 {
     po::options_description desc("Allowed options");
@@ -124,73 +134,49 @@ int main (int argc, const char *argv[])
         return 1;
     }
 
-
     double duration = static_cast<double>(cv::getTickCount());
 
-    // Input parameters
+    // Input parameters.
     int width    = vm["width"].as<int>();
     int height   = vm["height"].as<int>();
     int nbframes = vm["frames"].as<int>();
     int chroma   = vm["chroma"].as<int>();
 
-    std::string orig = vm["original"].as<std::string>();
-    std::string proc = vm["processed"].as<std::string>();
+    std::string orig_path = vm["original"].as<std::string>();
+    std::string proc_path = vm["processed"].as<std::string>();
+    std::string results_path = vm["processed"].as<std::string>();
 
+    // Input video streams.
+    VideoYUV *original  = new VideoYUV(orig_path.c_str(), height, width, nbframes, chroma);
+    VideoYUV *processed = new VideoYUV(proc_path.c_str(), height, width, nbframes, chroma);
 
-    std::cout << orig << " " << proc << std::endl;
-
-    // Input video streams
-    VideoYUV *original  = new VideoYUV(orig.c_str(), height, width, nbframes, chroma);
-    VideoYUV *processed = new VideoYUV(proc.c_str(), height, width, nbframes, chroma);
-
-    // Output files for results
+    // Output files for results.
     FILE *result_file[METRIC_SIZE] = {nullptr};
     char *str = new char[256];
     for (auto metric : vm["metrics"].as<std::vector<std::string>>()) {
-        std::cout << metric << std::endl;
-        if (metric == "PSNR") {
-            sprintf(str, "%s_psnr.csv", metric.c_str());
-            result_file[METRIC_PSNR] = fopen(str, "w");
+        if (metric2index.count (metric)) {
+            sprintf(str, "%s_%s.csv", results_path.c_str(), metric.c_str ());
+            result_file[metric2index[metric]] = fopen(str, "w");
         }
-        else if (metric == "SSIM") {
-            sprintf(str, "%s_ssim.csv", metric.c_str());
-            result_file[METRIC_SSIM] = fopen(str, "w");
-        }
-        else if (metric == "MSSSIM") {
-            sprintf(str, "%s_msssim.csv", metric.c_str());
-            result_file[METRIC_MSSSIM] = fopen(str, "w");
-        }
-        else if (metric == "VIFP") {
-            sprintf(str, "%s_vifp.csv", metric.c_str());
-            result_file[METRIC_VIFP] = fopen(str, "w");
-        }
-        else if (metric == "PSNRHVS") {
-            sprintf(str, "%s_psnrhvs.csv", metric.c_str());
-            result_file[METRIC_PSNRHVS] = fopen(str, "w");
-        }
-        else if (metric == "PSNRHVSM") {
-            sprintf(str, "%s_psnrhvsm.csv", metric.c_str());
-            result_file[METRIC_PSNRHVSM] = fopen(str, "w");
-        }
-        else if (metric == "WSPSNR") {
-            sprintf(str, "%s_wspsnr.csv", metric.c_str());
-            result_file[METRIC_WSPSNR] = fopen(str, "w");
+        else {
+            printf ("Warning: Metric %s not recognized and will be ignored.\n", metric.c_str() );
         }
     }
     delete[] str;
 
-    // Check size for VIFp downsampling
+    // Check size for VIFp downsampling.
     if (result_file[METRIC_VIFP] != nullptr && (height % 8 != 0 || width % 8 != 0)) {
         fprintf(stderr, "VIFp: 'height' and 'width' have to be multiple of 8.\n");
         exit(EXIT_FAILURE);
     }
-    // Check size for MS-SSIM downsampling
+
+    // Check size for MS-SSIM downsampling.
     if (result_file[METRIC_MSSSIM] != nullptr && (height % 16 != 0 || width % 16 != 0)) {
         fprintf(stderr, "MS-SSIM: 'height' and 'width' have to be multiple of 16.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Print header to file
+    // Print header to file.
     for (int m=0; m<METRIC_SIZE; m++) {
         if (result_file[m] != nullptr) {
             fprintf(result_file[m], "frame,value\n");
@@ -203,6 +189,7 @@ int main (int argc, const char *argv[])
     VIFP *vifp     = new VIFP(height, width);
     PSNRHVS *phvs  = new PSNRHVS(height, width);
 
+    // Spherical metrics.
     WSPSNR *wspsnr = new WSPSNR(height, width);
 
     cv::Mat original_frame(height,width,CV_32F), processed_frame(height,width,CV_32F);
@@ -238,12 +225,12 @@ int main (int argc, const char *argv[])
             result[METRIC_MSSSIM] = msssim->getMSSSIM();
         }
 
-        // Compute VIFp
+        // Compute VIFp,
         if (result_file[METRIC_VIFP] != nullptr) {
             result[METRIC_VIFP] = vifp->compute(original_frame, processed_frame);
         }
 
-        // Compute PSNR-HVS and PSNR-HVS-M
+        // Compute PSNR-HVS and PSNR-HVS-M,
         if (result_file[METRIC_PSNRHVS] != nullptr || result_file[METRIC_PSNRHVSM] != nullptr) {
             phvs->compute(original_frame, processed_frame);
 
@@ -256,12 +243,14 @@ int main (int argc, const char *argv[])
             }
         }
 
-        // Compute WSPSNR
+        // Compute WSPSNR,
         if (result_file[METRIC_WSPSNR] != nullptr) {
             result[METRIC_WSPSNR] = wspsnr->compute(original_frame, processed_frame);
         }
 
-        printf ("PSNR: %.3f, WSPSNR: %.3f\n", result[METRIC_PSNR], result[METRIC_WSPSNR]);
+        printf ( "PSNR: %.3f, WSPSNR: %.3f\n",
+                 static_cast<double>(result[METRIC_PSNR]),
+                 static_cast<double>(result[METRIC_WSPSNR]) );
 
         // Print quality index to file
         for (int m=0; m<METRIC_SIZE; m++) {
@@ -273,7 +262,7 @@ int main (int argc, const char *argv[])
     }
 
     // Print average quality index to file
-    for (int m=0; m<METRIC_SIZE; m++) {
+    for (int m = 0; m < METRIC_SIZE; m++) {
         if (result_file[m] != nullptr) {
             result_avg[m] /= static_cast<float>(nbframes);
             fprintf(result_file[m], "average,%.6f", static_cast<double>(result_avg[m]));
@@ -281,9 +270,16 @@ int main (int argc, const char *argv[])
         }
     }
 
-    delete psnr, ssim, msssim, vifp, phvs;
+    delete psnr;
+    delete ssim;
+    delete msssim;
+    delete vifp;
+    delete phvs;
+
     delete wspsnr;
-    delete original, processed;
+
+    delete original;
+    delete processed;
 
     duration = static_cast<double>(cv::getTickCount()) - duration;
     duration /= cv::getTickFrequency();

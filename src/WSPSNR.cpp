@@ -36,7 +36,7 @@ float WSPSNR::compute(const cv::Mat& original, const cv::Mat& processed)
 
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            weights.at<float>(j, i) = cos ((j + 0.5 - (height / 2.0)) * M_PI / height);
+            weights.at<float>(j, i) = (float) cos ((j + 0.5 - (height / 2.0)) * M_PI / height);
         }
     }
 
