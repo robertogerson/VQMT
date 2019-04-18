@@ -111,15 +111,7 @@ cv::Scalar WSSSIM::computeWSSSIM (const cv::Mat& img1, const cv::Mat& img2)
         for (int i = 0; i < width; i++)
             weights.at<float>(j, i) = static_cast<float> (cos ((j + 0.5 - (height / 2.0)) * M_PI / height));
 
-    double sum_weights = cv::sum( weights )[0];
-    cv::namedWindow("ssim_map", cv::WINDOW_AUTOSIZE );// Create a window for display.
-    cv::imshow( "ssim_map", ssim_map);                   // Show our image inside it.
-
     cv::multiply (ssim_map, weights, ssim_map);
-
-    cv::namedWindow("ssim_map_2", cv::WINDOW_AUTOSIZE );// Create a window for display.
-    cv::imshow("ssim_map_2", ssim_map);                   // Show our image inside it.
-    cv::waitKey (0);
 
     // mssim = mean2(ssim_map);
     double mssim = cv::sum(ssim_map)[0] / cv::sum (weights)[0];
